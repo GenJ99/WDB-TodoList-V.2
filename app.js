@@ -47,21 +47,33 @@ const item3 = new Item({
 // Add Mongoose documents to an array
 const defaultItems = [item1, item2, item3];
 
-// Add the documents to the todolistDB with the insertMany() function
-Item.insertMany(defaultItems, function(err) {
-  if (err) {
-    console.log(err);
-  } else {
-    console.log("Successfully added all the default items to DB.");
-  }
-})
-
 
 
 app.get("/", function(req, res) {
-  res.render("list", {
-    listTitle: "Today",
-    newListItems: items
+
+  // Finding the documents from the todolistDB and rendering it to app
+  // NOTE: Good reference materia to render default information from a Mongo/Mongoose database
+  Item.find({}, function(err, foundItems) {
+
+    // Logic below adds default items for database if empty, then redirects to render the list.ejs page
+    if (foundItems.length === 0) {
+
+      //Add the documents to the todolistDB with the insertMany() function
+      Item.insertMany(defaultItems, function(err) {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log("Successfully added all the default items to DB.");
+        }
+      });
+      res.redirect("/");
+
+    } else {
+      res.render("list", {
+        listTitle: "Today",
+        newListItems: foundItems
+      });
+    }
   });
 });
 
