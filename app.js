@@ -85,10 +85,24 @@ app.post("/", function(req, res) {
   const item = new Item({
     name: itemName
   });
-
   // New item is saved to database with method then redirected to home page.
   item.save();
   res.redirect("/");
+});
+
+
+
+app.post("/delete", function(req, res) {
+  const checkedItemId = req.body.checkbox;
+
+  Item.findByIdAndRemove(checkedItemId, function(err) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("Successfully removed document by id.");
+      res.redirect("/");
+    }
+  });
 });
 
 
