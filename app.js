@@ -78,15 +78,17 @@ app.get("/", function(req, res) {
 });
 
 app.post("/", function(req, res) {
-  const item = req.body.newItem;
+  //** Add a new item to the datebase **//
+  const itemName = req.body.newItem;
+  // New item is created with associating name property
+  // of Datebase and the list.ejs input element
+  const item = new Item({
+    name: itemName
+  });
 
-  if (req.body.list === "Work") {
-    workItems.push(item);
-    res.redirect("/work");
-  } else {
-    items.push(item);
-    res.redirect("/");
-  }
+  // New item is saved to database with method then redirected to home page.
+  item.save();
+  res.redirect("/");
 });
 
 
