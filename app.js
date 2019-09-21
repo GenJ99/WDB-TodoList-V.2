@@ -78,7 +78,7 @@ app.get("/", function(req, res) {
         }
       });
       res.redirect("/");
-
+      // Render list.ejs template with title and accumulated list items
     } else {
       res.render("list", {
         listTitle: "Today",
@@ -91,14 +91,25 @@ app.get("/", function(req, res) {
 app.post("/", function(req, res) {
   //** Add a new item to the datebase **//
   const itemName = req.body.newItem;
+  const listName = req.body.list;
   // New item is created with associating name property
   // of Datebase and the list.ejs input element
   const item = new Item({
     name: itemName
   });
-  // New item is saved to database with method then redirected to home page.
-  item.save();
-  res.redirect("/");
+
+  if (listName === "Today") {
+    // New item is saved to database with method then redirected to home page for Today list
+    item.save();
+    res.redirect("/");
+  } else {
+    // New item is added for a created list, saved, and redirected to custom route parameter
+    List.findOne({name: listName}, function(err, foundList) {
+      foundList.items.push(item);
+      foundList.save();
+      res.redirect("/" + listName);
+    });
+  }
 });
 
 
@@ -126,17 +137,24 @@ app.get("/:customListName", function(req, res) {
     name: customListName
   }, function(err, foundList) {
     if (!err) {
+
       if (!foundList) {
-        // List model created from base default items
+        // List model created from base default items upon no error not being found
         const list = new List({
           name: customListName,
           items: defaultItems
         });
+
+        // List is saved then redirected to /:customListName
         list.save();
         res.redirect("/" + customListName);
+
       } else {
         // Show an existing list
-        res.render("list", {listTitle: foundList.name, newListItems: foundList.items});
+        res.render("list", {
+          listTitle: foundList.name,
+          newListItems: foundList.items
+        });
       }
     }
   });
