@@ -3,6 +3,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const _ = require("lodash");
 
 const app = express();
 
@@ -104,7 +105,10 @@ app.post("/", function(req, res) {
     res.redirect("/");
   } else {
     // New item is added for a created list, saved, and redirected to custom route parameter
-    List.findOne({name: listName}, function(err, foundList) {
+    // get method
+    List.findOne({
+      name: listName
+    }, function(err, foundList) {
       foundList.items.push(item);
       foundList.save();
       res.redirect("/" + listName);
@@ -115,23 +119,44 @@ app.post("/", function(req, res) {
 
 
 app.post("/delete", function(req, res) {
+  // Constants created from the checklist form as listName is a hidden element from the user.
   const checkedItemId = req.body.checkbox;
+  const listName = req.body.listName;
 
-  Item.findByIdAndRemove(checkedItemId, function(err) {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log("Successfully removed document by id.");
-      res.redirect("/");
-    }
-  });
+  if (listName === "Today") {
+    // findByIdAndRemove function is used to check by id to remove items from home checklist
+    Item.findByIdAndRemove(checkedItemId, function(err) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("Successfully removed document by id.");
+        res.redirect("/");
+      }
+    });
+  } else {
+    // The findOneAndUpdate function uses the listName condition to specify a list. Then the
+    // update occurs by having the $pull operator update from the items array a given _id.
+    List.findOneAndUpdate({
+      name: listName
+    }, {
+      $pull: {
+        items: {
+          _id: checkedItemId
+        }
+      }
+    }, function(err, foundList) {
+        if (!err) {
+          res.redirect("/" + listName);
+        }
+    });
+  }
 });
 
 
 
 app.get("/:customListName", function(req, res) {
   // Constant created for route parameter
-  const customListName = req.params.customListName;
+  const customListName = _.capitalize(req.params.customListName);
 
   List.findOne({
     name: customListName
